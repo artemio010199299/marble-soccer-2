@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Marble Soccer Career</title>
+<style>
+:root{color-scheme:dark;--bg:#111820;--panel:#25313b;--line:#dce6dc;--green:#70b943;--gold:#ffd65a}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#293b32,#101820 70%);color:#fff;font-family:Arial,sans-serif;text-align:center;user-select:none}
+button,input,select{font:inherit}
+button{border:2px solid #dce6dc;border-radius:22px;background:#424b53;color:#fff;padding:10px 16px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 #101010}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 #101010}
+button.primary{background:#5c9f38}button.gold{background:#a87524}button:disabled{opacity:.45;cursor:not-allowed}
+header{padding:12px 5px 2px;font-weight:1000;font-style:italic;font-size:clamp(25px,5vw,42px);text-shadow:3px 3px #101010;letter-spacing:1px}
+header span{color:#b8f16c}
+#app{max-width:1100px;margin:auto;padding:0 10px 22px}
+.panel{position:relative;background:linear-gradient(145deg,#303d47,#202a32);border:2px solid #64717b;border-radius:13px;padding:16px;margin:12px auto;max-width:650px;box-shadow:0 6px 0 #0b1014}
+.panel h2{margin:4px 0 14px;font-size:22px}
+.menu{display:grid;gap:10px;max-width:300px;margin:16px auto}
+.menu button{width:100%;text-transform:uppercase}
+.hidden{display:none!important}
+.back{position:absolute;right:10px;top:10px;min-width:0;padding:6px 12px}
+input,select{background:#f3f3f3;color:#111;border:1px solid #aaa;border-radius:8px;padding:10px;max-width:100%}
+.row{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap}
+#fieldWrap{width:min(100%,1000px);margin:10px auto;position:relative}
+body.portrait #fieldWrap{width:min(100%,600px)}
+canvas{width:100%;height:auto;display:block;border:3px solid #e8eee8;border-radius:6px;background:#69a53d;touch-action:none}
+#hud{position:absolute;top:8px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#111d;color:#fff;border:2px solid white;border-radius:8px;padding:6px 13px;font-weight:900;font-size:clamp(12px,2.1vw,17px);pointer-events:none}
+#notice{position:absolute;top:52px;left:50%;transform:translateX(-50%);font-weight:1000;font-size:clamp(19px,4vw,32px);text-shadow:2px 2px #111;pointer-events:none}
+#controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;max-width:540px;margin:10px auto}
+#controls button{min-width:0;padding:13px 4px;touch-action:none}
+#controls .wide{grid-column:span 3}
+#teams{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:430px;margin:12px auto}
+.flag{font-size:25px;padding:10px 4px;border:2px solid #667;background:#303941;border-radius:10px;cursor:pointer}
+.flag.selected{border:3px solid var(--gold);background:#48533a}
+.small{font-size:12px;color:#cbd4d9;line-height:1.5}
+table{width:100%;border-collapse:collapse;text-align:left}td,th{padding:9px;border-bottom:1px solid #59646c}
+#careerList{display:grid;gap:6px;margin-top:12px}
+.careerItem{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px;background:#151e25;border-radius:8px}
+.careerItem button{padding:6px 10px;min-width:0}
+@media(max-width:520px){#app{padding:0 5px 15px}.panel{padding:12px}#controls button{font-size:13px;padding:12px 3px}#teams{gap:5px}}
+</style>
+</head>
+<body>
+<header>MARBLE <span>⚽</span> SOCCER</header>
+<div id="app">
+<section id="home" class="panel">
+ <h2>ГЛАВНОЕ МЕНЮ</h2>
+ <div class="menu">
+  <button class="primary" id="playBtn">ИГРАТЬ</button>
+  <button id="careerBtn">КАРЬЕРА ИГРОКА</button>
+  <button id="leadersBtn">ТАБЛИЦА БОМБАРДИРОВ</button>
+  <button id="settingsBtn">НАСТРОЙКИ</button>
+ </div>
+ <div class="small">Одиночный футбольный матч • Сохранение карьеры в браузере</div>
+</section>
+
+<section id="setup" class="panel hidden">
+ <button class="back" data-back="home">←</button>
+ <h2>ПОДГОТОВКА К МАТЧУ</h2>
+ <p>Выбери цвет своей команды</p>
+ <div id="teams">
+  <div class="flag selected" data-color="#2879ff">🔵</div><div class="flag" data-color="#e54444">🔴</div>
+  <div class="flag" data-color="#e5c638">🟡</div><div class="flag" data-color="#f0f0f0">⚪</div>
+  <div class="flag" data-color="#28b878">🟢</div><div class="flag" data-color="#a34ce0">🟣</div>
+  <div class="flag" data-color="#ed8c32">🟠</div><div class="flag" data-color="#242424">⚫</div>
+ </div>
+ <div class="row"><label>Состав <select id="teamSize"><option value="3">3 на 3</option><option value="5" selected>5 на 5</option><option value="7">7 на 7</option></select></label>
+ <label>Время <select id="duration"><option value="60">1 мин</option><option value="120" selected>2 мин</option><option value="180">3 мин</option><option value="300">5 мин</option></select></label></div>
+ <p class="small">Сначала выбери футболиста в разделе «Карьера». Если не выберешь — сыграешь как Гость.</p>
+ <button class="primary" id="startBtn">НАЧАТЬ МАТЧ</button>
+</section>
+
+<section id="career" class="panel hidden">
+ <button class="back" data-back="home">←</button>
+ <h2>КАРЬЕРА ФУТБОЛИСТА</h2>
+ <div class="row"><input id="playerName" maxlength="20" placeholder="Имя футболиста"><input id="playerNo" type="number" min="1" max="99" value="10" style="width:80px"><button class="primary" id="createBtn">СОЗДАТЬ</button></div>
+ <p class="small">Нажми «Выбрать», чтобы играть этим футболистом. Данные сохраняются на этом устройстве.</p>
+ <div id="careerList"></div>
+</section>
+
+<section id="leaders" class="panel hidden">
+ <button class="back" data-back="home">←</button>
+ <h2>🏆 ТАБЛИЦА БОМБАРДИРОВ</h2>
+ <div id="leaderList"></div>
+</section>
+
+<section id="settings" class="panel hidden">
+ <button class="back" data-back="home">←</button>
+ <h2>НАСТРОЙКИ</h2>
+ <p>Режим экрана</p>
+ <div class="row">
+  <button type="button" id="horizontalMode">ГОРИЗОНТАЛЬНЫЙ</button>
+  <button type="button" id="verticalMode">ВЕРТИКАЛЬНЫЙ</button>
+ </div>
+ <p class="small" id="screenModeLabel"></p>
+ <p>Скорость игры</p><select id="gameSpeed"><option value=".85">Медленная</option><option value="1" selected>Обычная</option><option value="1.2">Быстрая</option></select>
+ <p class="small">На компьютере: WASD или стрелки — движение, E — подобрать мяч, пробел — удар, Q — пас, Esc — пауза.</p>
+</section>
+
+<section id="match" class="hidden">
+ <div id="fieldWrap"><canvas id="field" width="1000" height="600"></canvas><div id="hud"></div><div id="notice"></div></div>
+ <div id="controls">
+  <button data-move="up">⬆ ВВЕРХ</button><button class="primary" id="pickup">✋ ЗАБРАТЬ</button><button class="gold" id="shoot">⚽ УДАР</button>
+  <button data-move="left">⬅ ВЛЕВО</button><button data-move="down">⬇ ВНИЗ</button><button data-move="right">➡ ВПРАВО</button>
+  <button class="wide" id="pass">➤ ПАС ПАРТНЁРУ</button>
+ </div>
+ <div class="row"><button id="pauseBtn">Ⅱ ПАУЗА</button><button id="quitBtn">ЗАВЕРШИТЬ МАТЧ</button></div>
+ <p class="small">Подойди к мячу и нажми «Забрать». Мяч прикрепится к твоему игроку.</p>
+</section>
+
+<section id="pause" class="panel hidden"><h2>ПАУЗА</h2><div class="menu"><button class="primary" id="resumeBtn">ПРОДОЛЖИТЬ</button><button id="pauseQuit">ЗАВЕРШИТЬ МАТЧ</button></div></section>
+<section id="result" class="panel hidden"><h2>МАТЧ ОКОНЧЕН</h2><h1 id="finalScore"></h1><p id="resultText"></p><button class="primary" id="againBtn">ЕЩЁ МАТЧ</button> <button id="resultHome">В МЕНЮ</button></section>
+</div>
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id),canvas=$('field'),ctx=canvas.getContext('2d');
+const W=1000,H=600,STORE='marbleSoccerCareer_v2';
+let screenMode='horizontal';
+try{screenMode=localStorage.getItem('marbleSoccerScreenMode')||'horizontal'}catch{}
+let roster=[],selectedId=null,teamColor='#2879ff',game=null,keys={},raf=0,last=0,paused=false,noticeUntil=0;
+try{roster=JSON.parse(localStorage.getItem(STORE)||'[]');if(!Array.isArray(roster))roster=[]}catch{roster=[]}
+const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(roster))}catch{}};
+const active=()=>roster.find(p=>p.id===selectedId)||null;
+function page(id){document.querySelectorAll('#app>section').forEach(s=>s.classList.add('hidden'));$(id).classList.remove('hidden')}
+function resizeField(){
+ const d=window.devicePixelRatio||1;
+ const vertical=screenMode==='vertical';
+ canvas.width=(vertical?H:W)*d;
+ canvas.height=(vertical?W:H)*d;
+ document.body.classList.toggle('portrait',vertical);
+ $('screenModeLabel').textContent='Выбран режим: '+(vertical?'вертикальный':'горизонтальный');
+}
+window.addEventListener('resize',()=>{resizeField();if(game&&!game.ended)draw()});
+function setScreenMode(value){
+ screenMode=value==='vertical'?'vertical':'horizontal';
+ try{localStorage.setItem('marbleSoccerScreenMode',screenMode)}catch{}
+ keys={};
+ resizeField();
+ if(game&&!game.ended)draw();
+}
+function mapMove(direction){
+ if(screenMode!=='vertical')return direction;
+ return ({up:'left',down:'right',left:'up',right:'down'})[direction]||direction;
+}
+function makeId(){return 'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function renderCareer(){
+ $('careerList').innerHTML=roster.length?roster.map(p=>`<div class="careerItem"><span>${escapeHtml(p.name)} #${p.number}<br><small>⚽ ${p.goals} голов · ${p.matches} матчей</small></span><span>${p.id===selectedId?'✅ ':''}<button data-select="${p.id}">Выбрать</button><button data-delete="${p.id}">✕</button></span></div>`).join(''):'Пока нет футболистов.';
+ $('careerList').querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selectedId=b.dataset.select;save();renderCareer()});
+ $('careerList').querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>{let id=b.dataset.delete;roster=roster.filter(p=>p.id!==id);if(selectedId===id)selectedId=null;save();renderCareer()});
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderLeaders(){let a=[...roster].sort((x,y)=>y.goals-x.goals||y.matches-x.matches);$('leaderList').innerHTML=a.length?'<table><thead><tr><th>#</th><th>Футболист</th><th>Голы</th><th>Матчи</th></tr></thead><tbody>'+a.map((p,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(p.name)}</td><td>⚽ ${p.goals}</td><td>${p.matches}</td></tr>`).join('')+'</tbody></table>':'Создай футболиста и забей гол, чтобы попасть в рейтинг.'}
+function player(x,y,color,user=false){return {x,y,vx:0,vy:0,r:user?19:17,color,user,angle:user?0:Math.PI,hasBall:false}}
+function start(){
+ let me=active();game={blue:[],red:[],ball:{x:500,y:300,vx:0,vy:0,r:10,owner:null},score:[0,0],time:+$('duration').value,initial:+$('duration').value,mode:'match',speed:+$('gameSpeed').value,ended:false};
+ let n=+$('teamSize').value;game.blue.push(player(270,300,teamColor,true));
+ for(let i=1;i<n;i++)game.blue.push(player(170+(i%2)*110,130+Math.floor((i-1)/2)*110,teamColor));
+ for(let i=0;i<n;i++)game.red.push(player(760+(i%2)*65,130+Math.floor(i/2)*95,'#e54444'));
+ game.meName=me?me.name:'Гость';game.meNumber=me?me.number:10;game.scorer=me;
+ page('match');paused=false;last=performance.now();$('notice').textContent='';cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+}
+function resetBall(){let b=game.ball;b.x=500;b.y=300;b.vx=b.vy=0;b.owner=null;game.blue.forEach((p,i)=>{p.x=260-(i%2)*80;p.y=300+(i-1)*65;p.vx=p.vy=0});game.red.forEach((p,i)=>{p.x=740+(i%2)*65;p.y=300+(i-1)*65;p.vx=p.vy=0})}
+function pickup(){if(!game||paused)return;let b=game.ball,p=game.blue[0];if(b.owner===p)return;if(!b.owner&&Math.hypot(b.x-p.x,b.y-p.y)<58){b.owner=p;b.vx=b.vy=0;notify('МЯЧ У ТЕБЯ!')}}
+function shoot(){if(!game||paused)return;let b=game.ball,p=game.blue[0];if(b.owner!==p){notify('СНАЧАЛА ЗАБЕРИ МЯЧ');return}b.owner=null;let dx=p.vx,dy=p.vy,d=Math.hypot(dx,dy);if(d<5){dx=1;dy=0;d=1}b.x=p.x+dx/d*25;b.y=p.y+dy/d*25;b.vx=dx/d*600;b.vy=dy/d*600}
+function passBall(){if(!game||paused)return;let b=game.ball,p=game.blue[0];if(b.owner!==p){notify('НУЖНО ВЛАДЕТЬ МЯЧОМ');return}let mates=game.blue.slice(1);if(!mates.length){notify('НЕТ ПАРТНЁРОВ ДЛЯ ПАСА');return}let t=mates.sort((a,c)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(c.x-p.x,c.y-p.y))[0];let dx=t.x-p.x,dy=t.y-p.y,d=Math.hypot(dx,dy)||1;b.owner=null;b.x=p.x;b.y=p.y;b.vx=dx/d*440;b.vy=dy/d*440}
+function notify(s){$('notice').textContent=s;noticeUntil=performance.now()+1100}
+function update(dt){
+ let g=game,b=g.ball,p=g.blue[0],dx=(keys.right?1:0)-(keys.left?1:0),dy=(keys.down?1:0)-(keys.up?1:0),d=Math.hypot(dx,dy)||1;
+ p.vx=dx/d*230*g.speed*(dx||dy?1:0);p.vy=dy/d*230*g.speed*(dx||dy?1:0);if(dx||dy)p.angle=Math.atan2(dy,dx);
+ for(let i=0;i<g.blue.length;i++){let q=g.blue[i];if(i){let targetX=b.x-70,targetY=b.y+(i%2?75:-75);moveAI(q,targetX,targetY,90,dt)}else{q.x+=q.vx*dt;q.y+=q.vy*dt}clamp(q)}
+ for(let i=0;i<g.red.length;i++){let q=g.red[i],targetX=b.x+45,targetY=b.y+(i%2?45:-45);moveAI(q,targetX,targetY,100,dt);clamp(q)}
+ if(b.owner){let o=b.owner;b.x=o.x+Math.cos(o.angle)*25;b.y=o.y+Math.sin(o.angle)*25;b.vx=b.vy=0}
+ else{b.x+=b.vx*dt;b.y+=b.vy*dt;let drag=Math.pow(.986,dt*60);b.vx*=drag;b.vy*=drag;
+ if(b.y<30||b.y>570){b.y=Math.max(30,Math.min(570,b.y));b.vy*=-.72}
+ if(b.x<25||b.x>975){if(b.y>225&&b.y<375){goal(b.x>975?0:1);return}else{b.x=Math.max(25,Math.min(975,b.x));b.vx*=-.72}}
+ for(let q of [...g.blue,...g.red]){let dist=Math.hypot(q.x-b.x,q.y-b.y);if(dist<q.r+b.r){let a=Math.atan2(b.y-q.y,b.x-q.x);b.x=q.x+Math.cos(a)*(q.r+b.r);b.y=q.y+Math.sin(a)*(q.r+b.r);b.vx+=Math.cos(a)*75;b.vy+=Math.sin(a)*75}}
+ }
+ // AI defenders contest ball, but cannot steal by teleporting
+ g.time=Math.max(0,g.time-dt);if(g.time===0)finish();
+}
+function moveAI(q,tx,ty,speed,dt){let dx=tx-q.x,dy=ty-q.y,d=Math.hypot(dx,dy)||1;q.vx=dx/d*speed;q.vy=dy/d*speed;q.x+=q.vx*dt;q.y+=q.vy*dt}
+function clamp(p){p.x=Math.max(45,Math.min(955,p.x));p.y=Math.max(45,Math.min(555,p.y))}
+function goal(side){if(!game)return;game.score[side]++;if(side===0&&game.scorer){game.scorer.goals++;save()}notify('⚽ ГООООЛ!');resetBall()}
+function finish(){if(!game||game.ended)return;game.ended=true;if(game.scorer){game.scorer.matches++;save()}$('finalScore').textContent=`${game.score[0]} : ${game.score[1]}`;$('resultText').textContent=game.score[0]>game.score[1]?'Победа! Отличный матч.':game.score[0]<game.score[1]?'В этот раз соперник оказался сильнее.':'Ничья!';page('result')}
+function draw(){
+ if(!game)return;let g=game;
+ const d=window.devicePixelRatio||1;
+ ctx.setTransform(1,0,0,1,0,0);
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ if(screenMode==='vertical')ctx.setTransform(0,d,-d,0,H*d,0);
+ else ctx.setTransform(d,0,0,d,0,0);
+ for(let i=0;i<10;i++){ctx.fillStyle=i%2?'#70a83b':'#659d35';ctx.fillRect(i*100,0,100,H)}
+ ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.strokeRect(22,22,956,556);ctx.beginPath();ctx.moveTo(500,22);ctx.lineTo(500,578);ctx.stroke();ctx.beginPath();ctx.arc(500,300,78,0,Math.PI*2);ctx.stroke();ctx.strokeRect(22,185,145,230);ctx.strokeRect(833,185,145,230);ctx.strokeRect(22,240,52,120);ctx.strokeRect(926,240,52,120);ctx.fillStyle='#eee';ctx.fillRect(0,240,24,120);ctx.fillRect(976,240,24,120);
+ [...g.blue,...g.red].forEach((q,i)=>{ctx.save();ctx.shadowColor='#111';ctx.shadowBlur=7;let gr=ctx.createRadialGradient(q.x-7,q.y-8,2,q.x,q.y,q.r);gr.addColorStop(0,'#fff');gr.addColorStop(.22,q.color);gr.addColorStop(1,'#17202a');ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,Math.PI*2);ctx.fillStyle=gr;ctx.fill();ctx.lineWidth=q.user?4:2;ctx.strokeStyle=q.user?'#fff':'#222';ctx.stroke();ctx.restore();ctx.fillStyle=q.color==='#f0f0f0'?'#111':'#fff';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.fillText(q.user?g.meNumber:(i%9+1),q.x,q.y+4);if(q.user){ctx.fillStyle='#fff';ctx.fillText(g.meName.slice(0,13),q.x,q.y-27)}});
+ let b=g.ball;ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#222';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#222';ctx.font='bold 12px Arial';ctx.fillText('⬟',b.x,b.y+4);
+ let sec=Math.ceil(g.time);$('hud').textContent=`🔵 ${g.score[0]} : ${g.score[1]} 🔴　${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+}
+function loop(now){if(!game||$('match').classList.contains('hidden')||paused)return;let dt=Math.min((now-last)/1000,.04);last=now;update(dt);draw();if(!game?.ended&&!$('match').classList.contains('hidden'))raf=requestAnimationFrame(loop)}
+function pause(){if(!game)return;paused=true;cancelAnimationFrame(raf);page('pause')}
+function resume(){paused=false;page('match');last=performance.now();raf=requestAnimationFrame(loop)}
+function leave(){cancelAnimationFrame(raf);game=null;paused=false;page('home')}
+$('horizontalMode').onclick=()=>setScreenMode('horizontal');
+$('verticalMode').onclick=()=>setScreenMode('vertical');
+resizeField();
+$('playBtn').onclick=()=>page('setup');$('careerBtn').onclick=()=>{renderCareer();page('career')};$('leadersBtn').onclick=()=>{renderLeaders();page('leaders')};$('settingsBtn').onclick=()=>page('settings');
+document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>page(b.dataset.back));
+document.querySelectorAll('.flag').forEach(b=>b.onclick=()=>{document.querySelectorAll('.flag').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');teamColor=b.dataset.color});
+$('createBtn').onclick=()=>{let name=$('playerName').value.trim();if(!name){alert('Введи имя футболиста');return}let p={id:makeId(),name,number:Math.max(1,Math.min(99,+$('playerNo').value||10)),goals:0,matches:0};roster.push(p);selectedId=p.id;save();renderCareer()};
+$('startBtn').onclick=start;$('pickup').onclick=pickup;$('shoot').onclick=shoot;$('pass').onclick=passBall;$('pauseBtn').onclick=pause;$('resumeBtn').onclick=resume;$('quitBtn').onclick=()=>{if(confirm('Завершить матч?')){if(game.scorer){game.scorer.matches++;save()}leave()}};$('pauseQuit').onclick=leave;$('againBtn').onclick=start;$('resultHome').onclick=leave;
+document.addEventListener('keydown',e=>{let k=e.key.toLowerCase(),map={w:'up',arrowup:'up',s:'down',arrowdown:'down',a:'left',arrowleft:'left',d:'right',arrowright:'right'};if(map[k]){keys[mapMove(map[k])]=true;e.preventDefault()}if(k==='e')pickup();if(k===' ') {e.preventDefault();shoot()}if(k==='q')passBall();if(k==='escape'&&!$('match').classList.contains('hidden'))pause()});
+document.addEventListener('keyup',e=>{let map={w:'up',arrowup:'up',s:'down',arrowdown:'down',a:'left',arrowleft:'left',d:'right',arrowright:'right'};if(map[e.key.toLowerCase()])keys[mapMove(map[e.key.toLowerCase()])]=false});
+document.querySelectorAll('[data-move]').forEach(btn=>{let k=mapMove(btn.dataset.move);btn.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;btn.setPointerCapture?.(e.pointerId)});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>btn.addEventListener(ev,()=>keys[k]=false))});
+renderCareer();renderLeaders();
+})();
+</script>
+</body>
+</html>
